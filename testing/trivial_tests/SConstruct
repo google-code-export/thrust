@@ -1,0 +1,66 @@
+import os
+import glob
+from warnings import warn
+
+# try to import an environment first
+try:
+  Import('env')
+except:
+  exec open("../../build/build-env.py")
+  env = Environment()
+
+# build and run the program that divines the version of the SM on gpu 0 of the build/test machine
+nvcc_options_file = env.Command('../../build/nvcc_options_file.txt',
+                                env.Program('../../build/print_sm_version.cpp'),
+                                os.path.join('"' + env.GetLaunchDir(), '../../build/print_sm_version" > ../../build/nvcc_options_file.txt'))
+
+env.Append(NVCCFLAGS = ['-optf=../../build/nvcc_options_file.txt'])
+
+# find all user-includable .h files in the thrust directory
+extensions = ['.h']
+folders = ['',              # main folder
+           'iterator/',
+           'experimental/',
+           'sorting/']
+
+# XXX this code obnoxiously creates *.cpp & *.cu upon scons -c :)
+for folder in folders:
+  for ext in extensions:
+    pattern = os.path.join(os.path.abspath("../../thrust/" + folder), "*" + ext)
+    for fullpath in glob.glob(pattern):
+      headerfilename = os.path.basename(fullpath)
+      # create a .cu file
+      fid = open(headerfilename.replace('.h', '.cu'), 'w')
+      fid.write('#include <thrust/' + folder + headerfilename + '>\n')
+      fid.close()
+      # create a .cpp file
+      fid = open(headerfilename.replace('.h', '_cpp.cpp'), 'w')
+      fid.write('#include <thrust/' + folder + headerfilename + '>\n')
+      fid.close()
+
+      # insure that all files #include <thrust/detail/config.h>
+      fid = open(fullpath)
+      if '#include <thrust/detail/config.h>' not in fid.read():
+        warn('Header <thrust/' + folder + headerfilename + '> does not include <thrust/detail/config.h>')
+
+
+
+    
+fid = open('main.cu', 'w')
+fid.write('int main(void){ return 0; }\n')
+fid.close()
+
+# find all .cus & .cpps in the current directory
+sources = []
+extensions = ['*.cu', '*.cpp']
+for ext in extensions:
+  sources.extend(env.Glob(ext, strings = True))
+
+tester = env.Program('tester', sources)
+env.Depends(sources, nvcc_options_file)
+
+# add all the .cu-generated linkinfo files to the clean list
+for src in sources:
+  if src.endswith('.cu'):
+    env.Clean(tester, src.replace(".cu", ".linkinfo"))
+
