@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <thrust/pair.h>
+
 namespace thrust
 {
 namespace detail
@@ -38,6 +40,31 @@ template<typename InputIterator,
                       SizeType n,
                       OutputType init,
                       BinaryFunction binary_op);
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BlockingPair,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_reduce_n(RandomAccessIterator1 first,
+                                  SizeType n,
+                                  BlockingPair blocking,
+                                  BinaryFunction binary_op,
+                                  RandomAccessIterator2 result);
+
+namespace detail
+{
+
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  thrust::pair<SizeType,SizeType>
+    get_unordered_blocked_reduce_n_schedule(RandomAccessIterator first,
+                                            SizeType n,
+                                            OutputType init);
+
+} // end detail
 
 } // end namespace cuda
 } // end namespace device

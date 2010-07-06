@@ -15,45 +15,38 @@
  */
 
 
-/*! \file reduce.h
- *  \brief OpenMP implementation for reduce
- */
-
 #pragma once
 
-#include <thrust/pair.h>
+#include <thrust/detail/config.h>
 
 namespace thrust
 {
+
 namespace detail
 {
+
 namespace device
 {
-namespace omp
-{
 
-template<typename InputIterator, 
-         typename OutputType,
-         typename BinaryFunction>
-  OutputType reduce(InputIterator first,
-                    InputIterator last,
-                    OutputType init,
-                    BinaryFunction binary_op);
+namespace generic
+{
 
 template<typename RandomAccessIterator,
          typename SizeType,
          typename OutputType,
          typename BinaryFunction>
-  thrust::pair<SizeType,SizeType>
-    get_unordered_blocked_reduce_n_schedule(RandomAccessIterator first,
-                                            SizeType n,
-                                            OutputType init,
-                                            BinaryFunction binary_op);
+  OutputType reduce_n(RandomAccessIterator first,
+                      SizeType n,
+                      OutputType init,
+                      BinaryFunction binary_op);
 
-} // end namespace omp
-} // end namespace device
-} // end namespace detail
-} // end namespace thrust
+} // end generic
 
-#include <thrust/detail/device/omp/reduce.inl>
+} // end device
+
+} // end detail
+
+} // end thrust
+
+#include <thrust/detail/device/generic/reduce.inl>
 
