@@ -146,6 +146,51 @@ template<typename InputIterator,
 #pragma warning(disable : 4244 4267)
 #endif
 
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  SizeType get_unordered_blocked_reduce_n_schedule(RandomAccessIterator first,
+                                                   SizeType n,
+                                                   OutputType init,
+                                                   BinaryFunction binary_op)
+{
+  // decide whether or not we will use smem
+  size_t smem_per_thread = 0;
+  if(sizeof(OutputType) <= 64)
+  {
+    smem_per_thread = sizeof(OutputType);
+  }
+
+  // choose block_size
+  size_t block_size = 0;
+  if(smem_per_thread > 0)
+  {
+    block_size = thrust::experimental::arch::max_blocksize_with_highest_occupancy(reduce_n_smem<RandomAccessIterator, OutputType, BinaryFunction>, smem_per_thread);
+  }
+  else
+  {
+    block_size = thrust::experimental::arch::max_blocksize_with_highest_occupancy(reduce_n_gmem<RandomAccessIterator, OutputType, BinaryFunction>, smem_per_thread);
+  }
+
+  const size_t smem_size = block_size * smem_per_thread;
+
+  // choose the maximum number of blocks we can launch
+  size_t max_blocks = 0;
+  if(smem_per_thread > 0)
+  {
+    max_blocks = thrust::experimental::arch::max_active_blocks(reduce_n_smem<RandomAccessIterator, OutputType, BinaryFunction>, block_size, smem_size);
+  }
+  else
+  {
+    max_blocks = thrust::experimental::arch::max_active_blocks(reduce_n_gmem<RandomAccessIterator, OutputType, BinaryFunction>, block_size, smem_size);
+  }
+
+  // finalize the number of blocks to launch
+  const size_t num_blocks = std::min<size_t>(max_blocks, (n + (block_size - 1)) / block_size);
+
+  return num_blocks;
+}
 
 
 template<typename InputIterator,
@@ -221,16 +266,62 @@ template<typename InputIterator,
     // reduce per-block sums together with init
     {
 #if CUDA_VERSION >= 3000
-        const size_t block_size_pass2 = std::min(block_size, thrust::experimental::arch::max_blocksize(reduce_n_gmem<OutputType *, OutputType, BinaryFunction>, smem_per_thread));
+        const size_t block_size_pass2 = std::min(block_size, thrust::experimental::arch::max_blocksize(reduce_n_gmem<OutputType *, OutputType, BinaryFunction>, 0));
 #else
         const size_t block_size_pass2 = 32;
 #endif        
-        const size_t smem_size_pass2  = smem_per_thread * block_size_pass2;
-        detail::reduce_n_gmem<<<1, block_size_pass2, smem_size_pass2>>>(raw_pointer_cast(&temp[0]), num_blocks + 1, raw_pointer_cast(&temp[0]), raw_pointer_cast(&shared_array[0]), binary_op);
+        detail::reduce_n_gmem<<<1, block_size_pass2>>>(raw_pointer_cast(&temp[0]), num_blocks + 1, raw_pointer_cast(&temp[0]), raw_pointer_cast(&shared_array[0]), binary_op);
     }
     
     return temp[0];
 } // end reduce_n()
+
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_reduce_n(RandomAccessIterator1 first,
+                                  SizeType n,
+                                  SizeType num_blocks,
+                                  BinaryFunction binary_op,
+                                  RandomAccessIterator2 result,
+                                  thrust::detail::true_type)   // reduce in shared memory
+{
+  typedef typename thrust::iterator_value<RandomAccessIterator2>::type OutputType;
+
+  // determine launch parameters
+  const size_t smem_per_thread = sizeof(OutputType);
+  const size_t block_size = thrust::experimental::arch::max_blocksize_with_highest_occupancy(reduce_n_smem<RandomAccessIterator1, OutputType, BinaryFunction>, smem_per_thread);
+  const size_t smem_size = block_size * smem_per_thread;
+
+  // reduce input to per-block sums
+  reduce_n_smem<<<num_blocks, block_size, smem_size>>>(first, n, thrust::raw_pointer_cast(&*result), binary_op);
+} // end unordered_blocked_reduce_n()
+
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_reduce_n(RandomAccessIterator1 first,
+                                  SizeType n,
+                                  SizeType num_blocks,
+                                  BinaryFunction binary_op,
+                                  RandomAccessIterator2 result,
+                                  thrust::detail::false_type)   // reduce in global memory
+{
+  typedef typename thrust::iterator_value<RandomAccessIterator2>::type OutputType;
+
+  const size_t block_size = thrust::experimental::arch::max_blocksize_with_highest_occupancy(reduce_n_gmem<RandomAccessIterator1, OutputType, BinaryFunction>, 0);
+
+  // allocate storage for shared array
+  thrust::detail::raw_cuda_device_buffer<OutputType> shared_array(block_size * num_blocks);
+
+  // reduce input to per-block sums
+  detail::reduce_n_gmem<<<num_blocks, block_size>>>(first, n, raw_pointer_cast(&*result), raw_pointer_cast(&shared_array[0]), binary_op);
+} // end unordered_blocked_reduce_n()
+
 
 } // end namespace detail
 
@@ -264,6 +355,28 @@ template<typename InputIterator,
 
     return detail::reduce_n(first, n, init, binary_op, use_smem);
 } // end reduce_n()
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_reduce_n(RandomAccessIterator1 first,
+                                  SizeType n,
+                                  SizeType num_blocks,
+                                  BinaryFunction binary_op,
+                                  RandomAccessIterator2 result)
+{
+  typedef typename thrust::iterator_value<RandomAccessIterator2>::type OutputType;
+
+  // handle zero length input or output
+  if(n == 0 || num_blocks == 0)
+    return;
+
+  // whether to perform blockwise reductions in shared memory or global memory
+  thrust::detail::integral_constant<bool, sizeof(OutputType) <= 64> use_smem;
+
+  return detail::unordered_blocked_reduce_n(first, n, num_blocks, binary_op, result, use_smem);
+} // end unordered_blocked_reduce_n()
 
 } // end namespace cuda
 } // end namespace device
