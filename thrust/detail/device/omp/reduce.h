@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <thrust/pair.h>
 
 namespace thrust
 {
@@ -38,6 +39,15 @@ template<typename InputIterator,
                     InputIterator last,
                     OutputType init,
                     BinaryFunction binary_op);
+
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  SizeType get_unordered_blocked_reduce_n_schedule(RandomAccessIterator first,
+                                                   SizeType n,
+                                                   OutputType init,
+                                                   BinaryFunction binary_op);
 
 } // end namespace omp
 } // end namespace device
