@@ -15,36 +15,38 @@
  */
 
 
-/*! \file reduce.h
- *  \brief Defines the interface to a function for
- *         computing a general reduction on the device.
- */
-
 #pragma once
 
-#include <thrust/pair.h>
+#include <thrust/detail/config.h>
 
 namespace thrust
 {
+
 namespace detail
 {
+
 namespace device
 {
-namespace cuda
+
+namespace generic
 {
 
-template<typename InputIterator, 
+template<typename RandomAccessIterator,
+         typename SizeType,
          typename OutputType,
          typename BinaryFunction>
-  OutputType reduce(InputIterator first,
-                    InputIterator last,
-                    OutputType init,
-                    BinaryFunction binary_op);
+  OutputType reduce_n(RandomAccessIterator first,
+                      SizeType n,
+                      OutputType init,
+                      BinaryFunction binary_op);
 
-} // end namespace cuda
-} // end namespace device
-} // end namespace detail
-} // end namespace thrust
+} // end generic
 
-#include "reduce.inl"
+} // end device
+
+} // end detail
+
+} // end thrust
+
+#include <thrust/detail/device/generic/reduce.inl>
 

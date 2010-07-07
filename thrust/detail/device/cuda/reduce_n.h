@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <thrust/pair.h>
+
 namespace thrust
 {
 namespace detail
@@ -38,6 +40,63 @@ template<typename InputIterator,
                       SizeType n,
                       OutputType init,
                       BinaryFunction binary_op);
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_reduce_n(RandomAccessIterator1 first,
+                                  SizeType n,
+                                  SizeType num_blocks,
+                                  BinaryFunction binary_op,
+                                  RandomAccessIterator2 result);
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_standard_reduce_n(RandomAccessIterator1 first,
+                                           SizeType n,
+                                           SizeType num_blocks,
+                                           BinaryFunction binary_op,
+                                           RandomAccessIterator2 result);
+
+template<typename RandomAccessIterator1,
+         typename SizeType,
+         typename BinaryFunction,
+         typename RandomAccessIterator2>
+  void unordered_blocked_wide_reduce_n(RandomAccessIterator1 first,
+                                       SizeType n,
+                                       SizeType num_blocks,
+                                       BinaryFunction binary_op,
+                                       RandomAccessIterator2 result);
+
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  SizeType get_unordered_blocked_reduce_n_schedule(RandomAccessIterator first,
+                                                   SizeType n,
+                                                   OutputType init,
+                                                   BinaryFunction binary_op);
+
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  SizeType get_unordered_blocked_standard_reduce_n_schedule(RandomAccessIterator first,
+                                                            SizeType n,
+                                                            OutputType init,
+                                                            BinaryFunction binary_op);
+
+template<typename RandomAccessIterator,
+         typename SizeType,
+         typename OutputType,
+         typename BinaryFunction>
+  SizeType get_unordered_blocked_wide_reduce_n_schedule(RandomAccessIterator first,
+                                                        SizeType n,
+                                                        OutputType init,
+                                                        BinaryFunction binary_op);
 
 } // end namespace cuda
 } // end namespace device
