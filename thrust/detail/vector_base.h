@@ -26,7 +26,7 @@
 #include <thrust/iterator/reverse_iterator.h>
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/detail/type_traits.h>
-#include <thrust/detail/contiguous_storage.h>
+#include <thrust/detail/choose_storage.h>
 #include <thrust/utility.h>
 #include <vector>
 
@@ -40,7 +40,7 @@ template<typename T, typename Alloc>
   class vector_base
 {
   private:
-    typedef thrust::detail::contiguous_storage<T,Alloc> storage_type;
+    typedef typename thrust::detail::choose_storage<T,Alloc>::type storage_type;
 
   public:
     // typedefs
@@ -488,6 +488,7 @@ template<typename T1, typename Alloc1,
          typename T2, typename Alloc2>
 bool operator<<(const std::vector<T1,Alloc1>&         lhs,
                 const detail::vector_base<T2,Alloc2>& rhs);
+
 
 } // end thrust
 
