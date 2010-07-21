@@ -26,7 +26,7 @@
 #include <thrust/iterator/reverse_iterator.h>
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/detail/type_traits.h>
-#include <thrust/detail/contiguous_storage.h>
+#include <thrust/detail/choose_storage.h>
 #include <thrust/utility.h>
 #include <vector>
 
@@ -40,7 +40,7 @@ template<typename T, typename Alloc>
   class vector_base
 {
   private:
-    typedef thrust::detail::contiguous_storage<T,Alloc> storage_type;
+    typedef typename thrust::detail::choose_storage<T,Alloc>::type storage_type;
 
   public:
     // typedefs
@@ -373,6 +373,11 @@ template<typename T, typename Alloc>
      */
     template<typename InputIterator>
     void assign(InputIterator first, InputIterator last);
+
+    /*! This method returns a copy of this vector's allocator.
+     *  \return A copy of the alloctor used by this vector.
+     */
+    allocator_type get_allocator(void) const;
 
   protected:
     // Our storage
