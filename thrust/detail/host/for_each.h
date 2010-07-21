@@ -14,34 +14,36 @@
  *  limitations under the License.
  */
 
-
-/*! \file find.h
- *  \brief Search for differences between sequences [generic device].
- */
-
 #pragma once
 
-#include <thrust/pair.h>
+#include <thrust/detail/config.h>
 
 namespace thrust
 {
 namespace detail
 {
-namespace device
-{
-namespace generic
+namespace host
 {
 
-template <typename InputIterator1, typename InputIterator2, typename BinaryPredicate>
-thrust::pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
-                                                      InputIterator1 last1,
-                                                      InputIterator2 first2,
-                                                      BinaryPredicate pred);
 
-} // end namespace generic
-} // end namespace device
+template<typename InputIterator,
+         typename UnaryFunction>
+InputIterator for_each(InputIterator first,
+                       InputIterator last,
+                       UnaryFunction f);
+
+
+template<typename OutputIterator,
+         typename Size,
+         typename UnaryFunction>
+OutputIterator for_each_n(OutputIterator first,
+                          Size n,
+                          UnaryFunction f);
+
+
+} // end namespace host
 } // end namespace detail
 } // end namespace thrust
 
-#include <thrust/detail/device/generic/mismatch.inl>
+#include <thrust/detail/host/for_each.inl>
 

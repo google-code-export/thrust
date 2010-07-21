@@ -15,31 +15,33 @@
  */
 
 
-/*! \file swap_ranges.h
- *  \brief Device interface to swap_ranges.
- */
-
-#pragma once
-
-#include <thrust/detail/device/generic/swap_ranges.h>
-
 namespace thrust
 {
 namespace detail
 {
-namespace device
+namespace host
+{
+namespace detail
 {
 
-template<typename ForwardIterator1,
-         typename ForwardIterator2>
-  ForwardIterator2 swap_ranges(ForwardIterator1 first1,
-                               ForwardIterator1 last1,
-                               ForwardIterator2 first2)
+template <typename BidirectionalIterator1,
+          typename BidirectionalIterator2>
+BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, 
+                                     BidirectionalIterator1 last, 
+                                     BidirectionalIterator2 result)
 {
-    return thrust::detail::device::generic::swap_ranges(first1, last1, first2);
+    while (first != last)
+    {
+        --last;
+        --result;
+        *result = *last;
+    }
+
+    return result;
 }
 
-} // end namespace device
+} // end namespace detail
+} // end namespace host
 } // end namespace detail
 } // end namespace thrust
 
