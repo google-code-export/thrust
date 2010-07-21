@@ -15,30 +15,33 @@
  */
 
 
-/*! \file fill.h
- *  \brief Device implementation of fill.
- */
-
-#pragma once
-
 namespace thrust
 {
 namespace detail
 {
-namespace device
+namespace host
 {
-namespace cuda
+namespace detail
 {
 
-template<typename OutputIterator, typename Size, typename T>
-  OutputIterator fill_n(OutputIterator first,
-                        Size n,
-                        const T &value);
+template <typename BidirectionalIterator1,
+          typename BidirectionalIterator2>
+BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, 
+                                     BidirectionalIterator1 last, 
+                                     BidirectionalIterator2 result)
+{
+    while (first != last)
+    {
+        --last;
+        --result;
+        *result = *last;
+    }
 
-} // end namespace cuda
-} // end namespace device
+    return result;
+}
+
+} // end namespace detail
+} // end namespace host
 } // end namespace detail
 } // end namespace thrust
-
-#include "fill.inl"
 
