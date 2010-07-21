@@ -15,13 +15,11 @@
  */
 
 
-/*! \file mismatch.h
- *  \brief Search for differences between sequences [host].
+/*! \file fill.h
+ *  \brief Host implementation of fill.
  */
 
 #pragma once
-
-#include <thrust/pair.h>
 
 namespace thrust
 {
@@ -30,21 +28,30 @@ namespace detail
 namespace host
 {
 
-template <typename InputIterator1, typename InputIterator2, typename BinaryPredicate>
-thrust::pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
-                                                      InputIterator1 last1,
-                                                      InputIterator2 first2,
-                                                      BinaryPredicate pred)
+template<typename ForwardIterator, typename T>
+  void fill(ForwardIterator first,
+            ForwardIterator last,
+            const T &value)
 {
-    while (first1 != last1)
+    while(first != last)
     {
-        if (!pred(*first1, *first2))
-            break;
+        *first = value;
+        ++first;
+    }
+}
 
-        ++first1; ++first2;
+template<typename OutputIterator, typename Size, typename T>
+  OutputIterator fill_n(OutputIterator first,
+                        Size n,
+                        const T &value)
+{
+    for(Size i = 0; i != n; ++i)
+    {
+        *first = value;
+        ++first;
     }
 
-    return thrust::make_pair(first1, first2);
+    return first;
 }
 
 } // end namespace host

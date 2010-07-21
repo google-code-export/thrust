@@ -19,13 +19,14 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/functional.h>
 #include <thrust/distance.h>
+#include <thrust/transform.h>
 
 #include <thrust/detail/internal_functional.h>
 #include <thrust/detail/raw_buffer.h>
 #include <thrust/detail/type_traits.h>
 
 #include <thrust/detail/device/scan.h>
-#include <thrust/detail/device/scatter.h>
+#include <thrust/scatter.h>
 
 namespace thrust
 {
@@ -93,10 +94,10 @@ OutputIterator copy_if(InputIterator1 first,
     
     // compute {0,1} predicates
     thrust::detail::raw_buffer<IndexType, Space> predicates(n);
-    thrust::detail::device::transform(stencil,
-                                      stencil + n,
-                                      predicates.begin(),
-                                      thrust::detail::predicate_to_integral<Predicate,IndexType>(pred));
+    thrust::transform(stencil,
+                      stencil + n,
+                      predicates.begin(),
+                      thrust::detail::predicate_to_integral<Predicate,IndexType>(pred));
 
     // scan {0,1} predicates
     thrust::detail::raw_buffer<IndexType, Space> scatter_indices(n);
@@ -107,12 +108,12 @@ OutputIterator copy_if(InputIterator1 first,
                                            thrust::plus<IndexType>());
 
     // scatter the true elements
-    thrust::detail::device::scatter_if(first,
-                                       last,
-                                       scatter_indices.begin(),
-                                       predicates.begin(),
-                                       result,
-                                       thrust::identity<IndexType>());
+    thrust::scatter_if(first,
+                       last,
+                       scatter_indices.begin(),
+                       predicates.begin(),
+                       result,
+                       thrust::identity<IndexType>());
 
     // find the end of the new sequence
     IndexType output_size = scatter_indices[n - 1] + predicates[n - 1];
@@ -145,7 +146,7 @@ template<typename InputIterator1,
     typename thrust::detail::make_unsigned<difference_type>::type unsigned_n(n);
   
     // use 32-bit indices when possible (almost always)
-    if (sizeof(difference_type) > sizeof(unsigned int) && unsigned_n > std::numeric_limits<unsigned int>::max())
+    if (sizeof(difference_type) > sizeof(unsigned int) && unsigned_n > (std::numeric_limits<unsigned int>::max)())
         return detail::copy_if<difference_type>(first, last, stencil, result, pred);
     else
         return detail::copy_if<unsigned int>(first, last, stencil, result, pred);
