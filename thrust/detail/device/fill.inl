@@ -15,11 +15,10 @@
  */
 
 
-/*! \file fill.h
- *  \brief Device implementation of fill.
- */
+#include <thrust/detail/device/dispatch/fill.h>
 
-#pragma once
+#include <thrust/iterator/iterator_traits.h>
+#include <thrust/distance.h>
 
 namespace thrust
 {
@@ -27,18 +26,28 @@ namespace detail
 {
 namespace device
 {
-namespace cuda
+
+template<typename ForwardIterator, typename T>
+  void fill(ForwardIterator first,
+            ForwardIterator last,
+            const T &value)
 {
+  // this is safe because all device iterators are
+  // random access at the moment
+  thrust::detail::device::fill_n(first, thrust::distance(first,last), value);
+}
 
 template<typename OutputIterator, typename Size, typename T>
   OutputIterator fill_n(OutputIterator first,
                         Size n,
-                        const T &value);
+                        const T &value)
+{
+  // dispatch on space
+  return thrust::detail::device::dispatch::fill_n(first, n, value,
+    typename thrust::iterator_space<OutputIterator>::type());
+}
 
-} // end namespace cuda
 } // end namespace device
 } // end namespace detail
 } // end namespace thrust
-
-#include "fill.inl"
 
