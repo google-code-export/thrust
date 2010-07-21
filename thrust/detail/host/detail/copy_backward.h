@@ -15,33 +15,33 @@
  */
 
 
-/*! \file logical.inl
- *  \brief Inline file for logical.h.
- */
-
-#include <thrust/find.h>
-#include <thrust/detail/internal_functional.h>
-
 namespace thrust
 {
-
-template <class InputIterator, class Predicate>
-bool all_of(InputIterator first, InputIterator last, Predicate pred)
+namespace detail
 {
-    return thrust::find_if(first, last, thrust::detail::not1(pred)) == last;
+namespace host
+{
+namespace detail
+{
+
+template <typename BidirectionalIterator1,
+          typename BidirectionalIterator2>
+BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, 
+                                     BidirectionalIterator1 last, 
+                                     BidirectionalIterator2 result)
+{
+    while (first != last)
+    {
+        --last;
+        --result;
+        *result = *last;
+    }
+
+    return result;
 }
 
-template <class InputIterator, class Predicate>
-bool any_of(InputIterator first, InputIterator last, Predicate pred)
-{
-    return thrust::find_if(first, last, pred) != last;
-}
-
-template <class InputIterator, class Predicate>
-bool none_of(InputIterator first, InputIterator last, Predicate pred)
-{
-    return !thrust::any_of(first, last, pred);
-}
-
+} // end namespace detail
+} // end namespace host
+} // end namespace detail
 } // end namespace thrust
 
