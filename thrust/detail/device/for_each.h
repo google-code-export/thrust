@@ -21,10 +21,6 @@
 
 #pragma once
 
-#include <thrust/distance.h>
-#include <thrust/detail/device/dispatch/for_each.h>
-#include <thrust/iterator/iterator_traits.h>
-
 namespace thrust
 {
 
@@ -40,23 +36,14 @@ template<typename OutputIterator,
          typename UnaryFunction>
 OutputIterator for_each_n(OutputIterator first,
                           Size n,
-                          UnaryFunction f)
-{
-  // dispatch on space
-  return thrust::detail::device::dispatch::for_each_n(first, n, f,
-      typename thrust::iterator_space<OutputIterator>::type());
-}
+                          UnaryFunction f);
 
 
 template<typename InputIterator,
          typename UnaryFunction>
-void for_each(InputIterator first,
-              InputIterator last,
-              UnaryFunction f)
-{
-  // all device iterators are random access right now, so this is safe
-  thrust::detail::device::for_each_n(first, thrust::distance(first,last), f);
-}
+InputIterator for_each(InputIterator first,
+                       InputIterator last,
+                       UnaryFunction f);
 
 
 } // end namespace device
@@ -64,4 +51,6 @@ void for_each(InputIterator first,
 } // end namespace detail
 
 } // end namespace thrust
+
+#include <thrust/detail/device/for_each.inl>
 
