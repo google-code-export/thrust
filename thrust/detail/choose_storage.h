@@ -14,38 +14,24 @@
  *  limitations under the License.
  */
 
-
-/*! \file find.h
- *  \brief Search for values in (unsorted) ranges [host].
- */
-
 #pragma once
+
+#include <thrust/detail/contiguous_storage.h>
+#include <thrust/detail/segmented_storage.h>
 
 namespace thrust
 {
+
 namespace detail
 {
-namespace host
+
+template<typename T, typename Allocator>
+  struct choose_storage
 {
+  typedef contiguous_storage<T,Allocator> type;
+};
 
-template <typename InputIterator, typename Predicate>
-InputIterator find_if(InputIterator first,
-                      InputIterator last,
-                      Predicate pred)
-{
-    while(first != last)
-    {
-        if (pred(*first))
-            return first;
+} // end detail
 
-        ++first;
-    }
-
-    // return first so zip_iterator works correctly
-    return first;
-}
-
-} // end namespace host
-} // end namespace detail
-} // end namespace thrust
+} // end thrust
 
