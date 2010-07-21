@@ -15,33 +15,46 @@
  */
 
 
-/*! \file logical.inl
- *  \brief Inline file for logical.h.
+/*! \file fill.h
+ *  \brief Host implementation of fill.
  */
 
-#include <thrust/find.h>
-#include <thrust/detail/internal_functional.h>
+#pragma once
 
 namespace thrust
 {
-
-template <class InputIterator, class Predicate>
-bool all_of(InputIterator first, InputIterator last, Predicate pred)
+namespace detail
 {
-    return thrust::find_if(first, last, thrust::detail::not1(pred)) == last;
+namespace host
+{
+
+template<typename ForwardIterator, typename T>
+  void fill(ForwardIterator first,
+            ForwardIterator last,
+            const T &value)
+{
+    while(first != last)
+    {
+        *first = value;
+        ++first;
+    }
 }
 
-template <class InputIterator, class Predicate>
-bool any_of(InputIterator first, InputIterator last, Predicate pred)
+template<typename OutputIterator, typename Size, typename T>
+  OutputIterator fill_n(OutputIterator first,
+                        Size n,
+                        const T &value)
 {
-    return thrust::find_if(first, last, pred) != last;
+    for(Size i = 0; i != n; ++i)
+    {
+        *first = value;
+        ++first;
+    }
+
+    return first;
 }
 
-template <class InputIterator, class Predicate>
-bool none_of(InputIterator first, InputIterator last, Predicate pred)
-{
-    return !thrust::any_of(first, last, pred);
-}
-
+} // end namespace host
+} // end namespace detail
 } // end namespace thrust
 
