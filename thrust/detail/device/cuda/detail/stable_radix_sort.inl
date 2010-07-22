@@ -32,6 +32,8 @@
 // do not attempt to compile this file with any other compiler
 #if THRUST_DEVICE_COMPILER == THRUST_DEVICE_COMPILER_NVCC
 
+#include <cassert>
+
 #include <thrust/device_ptr.h>
 #include <thrust/scan.h>
 #include <thrust/functional.h>
@@ -42,6 +44,16 @@
 #include <thrust/detail/util/align.h>
 
 #include "stable_radix_sort_util.h"
+
+
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// temporarily disable 'possible loss of data' warnings on MSVC
+#pragma warning(push)
+#pragma warning(disable : 4244 4267)
+#endif
+
+
 
 namespace thrust
 {
@@ -1054,7 +1066,6 @@ void radixSortStepKeysOnly(uint *keys,
     checkCudaError("radixSortStepKeysOnly");
 }
 
-
 //----------------------------------------------------------------------------
 // Main radix sort function.  Sorts in place in the keys and values arrays,
 // but uses the other device arrays as temporary storage.  All pointer 
@@ -1138,7 +1149,9 @@ void radix_sort(unsigned int * keys,
     {
         // keys is misaligned, copy to temp array and try again
         thrust::detail::raw_cuda_device_buffer<unsigned int> aligned_keys(thrust::device_ptr<unsigned int>(keys),
-                                                                     thrust::device_ptr<unsigned int>(keys) + numElements);
+                                                                          thrust::device_ptr<unsigned int>(keys) + numElements);
+        
+        assert(thrust::detail::util::is_aligned(thrust::raw_pointer_cast(&aligned_keys[0]), sizeof(uint4)));
 
         radix_sort(thrust::raw_pointer_cast(&aligned_keys[0]), numElements, preprocess, postprocess, keyBits);
         
@@ -1193,7 +1206,9 @@ void radix_sort_by_key(unsigned int * keys,
     {
         // keys is misaligned, copy to temp array and try again
         thrust::detail::raw_cuda_device_buffer<unsigned int> aligned_keys(thrust::device_ptr<unsigned int>(keys),
-                                                                     thrust::device_ptr<unsigned int>(keys) + numElements);
+                                                                          thrust::device_ptr<unsigned int>(keys) + numElements);
+
+        assert(thrust::detail::util::is_aligned(thrust::raw_pointer_cast(&aligned_keys[0]), sizeof(uint4)));
 
         radix_sort_by_key(thrust::raw_pointer_cast(&aligned_keys[0]), values, numElements, preprocess, postprocess, keyBits);
         
@@ -1206,8 +1221,10 @@ void radix_sort_by_key(unsigned int * keys,
     {
         // values is misaligned, copy to temp array and try again
         thrust::detail::raw_cuda_device_buffer<unsigned int> aligned_values(thrust::device_ptr<unsigned int>(values),
-                                                                       thrust::device_ptr<unsigned int>(values) + numElements);
+                                                                            thrust::device_ptr<unsigned int>(values) + numElements);
 
+        assert(thrust::detail::util::is_aligned(thrust::raw_pointer_cast(&aligned_values[0]), sizeof(uint4)));
+        
         radix_sort_by_key(keys, thrust::raw_pointer_cast(&aligned_values[0]), numElements, preprocess, postprocess, keyBits);
         
         thrust::copy(aligned_values.begin(), aligned_values.end(), thrust::device_ptr<unsigned int>(values));
@@ -1252,6 +1269,13 @@ void radix_sort_by_key(unsigned int * keys,
 } // end namespace device
 } // end namespace detail
 } // end namespace thrust
+
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// reenable 'possible loss of data' warnings
+#pragma warning(pop)
+#endif
+
 
 #endif // THRUST_DEVICE_COMPILER == THRUST_DEVICE_COMPILER_NVCC
 
