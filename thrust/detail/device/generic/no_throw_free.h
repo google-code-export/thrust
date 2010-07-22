@@ -16,10 +16,14 @@
 
 #pragma once
 
+#include <thrust/device_ptr.h>
 #include <thrust/device_free.h>
 
 namespace thrust
 {
+
+// XXX WAR circular #inclusion with forward declaration
+void device_free(thrust::device_ptr<void> ptr);
 
 namespace detail
 {
