@@ -39,6 +39,14 @@
 #include <thrust/experimental/arch.h>
 
 
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// temporarily disable 'possible loss of data' warnings on MSVC
+#pragma warning(push)
+#pragma warning(disable : 4244 4267)
+#endif
+
+
 namespace thrust
 {
 namespace detail
@@ -309,7 +317,7 @@ OutputIterator inclusive_scan(InputIterator first,
     // determine final launch parameters
     const unsigned int unit_size     = block_size;
     const unsigned int num_units     = thrust::detail::util::divide_ri(N, unit_size);
-    const unsigned int num_blocks    = std::min(max_blocks, num_units);
+    const unsigned int num_blocks    = (std::min)(max_blocks, num_units);
     const unsigned int num_iters     = thrust::detail::util::divide_ri(num_units, num_blocks);
     const unsigned int interval_size = unit_size * num_iters;
     
@@ -389,7 +397,7 @@ OutputIterator exclusive_scan(InputIterator first,
     // determine final launch parameters
     const unsigned int unit_size     = block_size;
     const unsigned int num_units     = thrust::detail::util::divide_ri(N, unit_size);
-    const unsigned int num_blocks    = std::min(max_blocks, num_units);
+    const unsigned int num_blocks    = (std::min)(max_blocks, num_units);
     const unsigned int num_iters     = thrust::detail::util::divide_ri(num_units, num_blocks);
     const unsigned int interval_size = unit_size * num_iters;
     
@@ -453,6 +461,11 @@ OutputIterator exclusive_scan(InputIterator first,
 } // end namespace device
 } // end namespace detail
 } // end namespace thrust
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// reenable 'possible loss of data' warnings
+#pragma warning(pop)
+#endif
 
 #endif // THRUST_DEVICE_COMPILER == THRUST_DEVICE_COMPILER_NVCC
 
