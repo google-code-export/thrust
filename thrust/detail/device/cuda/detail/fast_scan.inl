@@ -15,14 +15,6 @@
  */
 
 
-/*! \file fast_scan.h
- *  \brief A fast scan for primitive types.
- */
-
-#pragma once
-
-#include <thrust/detail/config.h>
-
 // do not attempt to compile this file with any other compiler
 #if THRUST_DEVICE_COMPILER == THRUST_DEVICE_COMPILER_NVCC
 
@@ -35,6 +27,14 @@
 
 // to configure launch parameters
 #include <thrust/experimental/arch.h>
+
+#include <thrust/detail/device/cuda/partition.h>
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// temporarily disable 'possible loss of data' warnings on MSVC
+#pragma warning(push)
+#pragma warning(disable : 4244 4267)
+#endif
 
 
 namespace thrust
@@ -179,6 +179,8 @@ void scan_intervals(InputIterator input,
             OutputIterator temp = output + (base + offset);
             thrust::detail::device::dereference(temp) = sdata[offset % K][offset / K];
         }   
+        
+        __syncthreads();
     }
 
     // process partially full unit at end of input (if necessary)
@@ -196,11 +198,11 @@ void scan_intervals(InputIterator input,
             }
         }
        
-        __syncthreads();
-       
         // carry in
         if (threadIdx.x == 0 && base != interval_begin)
             sdata[0][threadIdx.x] = binary_op(sdata[K][blockDim.x - 1], sdata[0][threadIdx.x]);
+
+        __syncthreads();
 
         // scan local values
         OutputType sum = sdata[0][threadIdx.x];
@@ -375,12 +377,11 @@ OutputIterator inclusive_scan(InputIterator first,
     const unsigned int N = last - first;
     
     const unsigned int unit_size  = CTA_SIZE * K;
-    const unsigned int num_units  = thrust::detail::util::divide_ri(N, unit_size);
     const unsigned int max_blocks = thrust::experimental::arch::max_active_blocks(scan_intervals<CTA_SIZE,K,InputIterator,OutputIterator,BinaryFunction>, CTA_SIZE, 0);
-    const unsigned int num_blocks = std::min(max_blocks, num_units);
-    const unsigned int num_iters  = thrust::detail::util::divide_ri(num_units, num_blocks);
-
-    const unsigned int interval_size = unit_size * num_iters;
+    
+    thrust::pair<unsigned int, unsigned int> splitting = uniform_interval_splitting<unsigned int>(N, unit_size, max_blocks);
+    const unsigned int interval_size = splitting.first;
+    const unsigned int num_blocks    = splitting.second;
 
     //std::cout << "N             " << N << std::endl;
     //std::cout << "max_blocks    " << max_blocks    << std::endl;
@@ -443,12 +444,11 @@ OutputIterator exclusive_scan(InputIterator first,
     const unsigned int N = last - first;
 
     const unsigned int unit_size  = CTA_SIZE * K;
-    const unsigned int num_units  = thrust::detail::util::divide_ri(N, unit_size);
     const unsigned int max_blocks = thrust::experimental::arch::max_active_blocks(scan_intervals<CTA_SIZE,K,InputIterator,OutputIterator,BinaryFunction>, CTA_SIZE, 0);
-    const unsigned int num_blocks = std::min(max_blocks, num_units);
-    const unsigned int num_iters  = thrust::detail::util::divide_ri(num_units, num_blocks);
-
-    const unsigned int interval_size = unit_size * num_iters;
+    
+    thrust::pair<unsigned int, unsigned int> splitting = uniform_interval_splitting<unsigned int>(N, unit_size, max_blocks);
+    const unsigned int interval_size = splitting.first;
+    const unsigned int num_blocks    = splitting.second;
 
     //std::cout << "N             " << N << std::endl;
     //std::cout << "max_blocks    " << max_blocks    << std::endl;
@@ -495,6 +495,12 @@ OutputIterator exclusive_scan(InputIterator first,
 } // end namespace device
 } // end namespace detail
 } // end namespace thrust
+
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// reenable 'possible loss of data' warnings
+#pragma warning(pop)
+#endif
 
 #endif // THRUST_DEVICE_COMPILER == THRUST_DEVICE_COMPILER_NVCC
 

@@ -280,6 +280,11 @@ template<typename T>
 }; // end is_int_or_cref
 
 
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// temporarily disable 'possible loss of data' warnings on MSVC
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
 
 template<typename From, typename To>
   struct is_convertible_sfinae
@@ -293,8 +298,14 @@ template<typename From, typename To>
     static From      m_from;
 
   public:
-    static const bool value = sizeof(test(m_from)) == 1;
+    static const bool value = sizeof(test(m_from)) == sizeof(one_byte);
 }; // end is_convertible_sfinae
+
+
+#if THRUST_HOST_COMPILER == THRUST_HOST_COMPILER_MSVC
+// reenable 'possible loss of data' warnings
+#pragma warning(pop)
+#endif
 
 
 template<typename From, typename To>
