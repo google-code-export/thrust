@@ -69,6 +69,369 @@ void TestRangeTransformBinarySimple(void)
 DECLARE_VECTOR_UNITTEST(TestRangeTransformBinarySimple);
 
 
+template <class Vector>
+void TestRangeTransformIfBinarySimple(void)
+{
+    typedef typename Vector::value_type T;
+
+    Vector input1(3);
+    Vector input2(3);
+    Vector stencil(3);
+    Vector output(3);
+    Vector result(3);
+
+    input1[0]  =  1; input1[1]  = -2; input1[2]  =  3;
+    input2[0]  = -4; input2[1]  =  5; input2[2]  =  6;
+    stencil[0] =  0; stencil[1] =  1; stencil[2] =  0;
+    output[0]  =  1; output[1]  =  2; output[2]  =  3;
+    result[0]  =  5; result[1]  =  2; result[2]  = -3;
+
+    thrust::identity<T> identity;
+
+    size_t result_size = thrust::experimental::range::transform_if(input1,
+                                                                   input2,
+                                                                   stencil,
+                                                                   output,
+                                                                   thrust::minus<T>(),
+                                                                   thrust::not1(identity));
+    
+    ASSERT_EQUAL(0, result_size);
+    ASSERT_EQUAL(output, result);
+}
+DECLARE_VECTOR_UNITTEST(TestRangeTransformIfBinarySimple);
+
+
+template <typename T>
+void TestRangeTransformUnary(const size_t n)
+{
+    thrust::host_vector<T>   h_input = unittest::random_integers<T>(n);
+    thrust::device_vector<T> d_input = h_input;
+
+    thrust::host_vector<T>   h_output(n);
+    thrust::device_vector<T> d_output(n);
+
+    thrust::experimental::range::transform(h_input, h_output, thrust::negate<T>());
+    thrust::experimental::range::transform(d_input, d_output, thrust::negate<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformUnary);
+
+
+struct is_positive
+{
+  template<typename T>
+  __host__ __device__
+  bool operator()(T &x)
+  {
+    return x > 0;
+  } // end operator()()
+}; // end is_positive
+
+
+template <typename T>
+void TestRangeTransformIfUnary(const size_t n)
+{
+    thrust::host_vector<T>   h_input   = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_stencil = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_output  = unittest::random_integers<T>(n);
+
+    thrust::device_vector<T> d_input   = h_input;
+    thrust::device_vector<T> d_stencil = h_stencil;
+    thrust::device_vector<T> d_output  = h_output;
+
+    thrust::experimental::range::transform_if(h_input,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::negate<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::negate<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformIfUnary);
+
+
+template <typename T>
+void TestRangeTransformBinary(const size_t n)
+{
+    thrust::host_vector<T>   h_input1 = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_input2 = unittest::random_integers<T>(n);
+    thrust::device_vector<T> d_input1 = h_input1;
+    thrust::device_vector<T> d_input2 = h_input2;
+
+    thrust::host_vector<T>   h_output(n);
+    thrust::device_vector<T> d_output(n);
+
+    thrust::experimental::range::transform(h_input1, h_input2, h_output, thrust::minus<T>());
+    thrust::experimental::range::transform(d_input1, d_input2, d_output, thrust::minus<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+    
+    thrust::experimental::range::transform(h_input1, h_input2, h_output, thrust::multiplies<T>());
+    thrust::experimental::range::transform(d_input1, d_input2, d_output, thrust::multiplies<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformBinary);
+
+
+template <typename T>
+void TestRangeTransformIfBinary(const size_t n)
+{
+    thrust::host_vector<T>   h_input1  = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_input2  = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_stencil = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_output  = unittest::random_integers<T>(n);
+
+    thrust::device_vector<T> d_input1  = h_input1;
+    thrust::device_vector<T> d_input2  = h_input2;
+    thrust::device_vector<T> d_stencil = h_stencil;
+    thrust::device_vector<T> d_output  = h_output;
+
+    thrust::experimental::range::transform_if(h_input1,
+                                              h_input2,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::minus<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input1,
+                                              d_input2,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::minus<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+
+    h_stencil = unittest::random_integers<T>(n);
+    d_stencil = h_stencil;
+    
+    thrust::experimental::range::transform_if(h_input1,
+                                              h_input2,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::multiplies<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input1,
+                                              d_input2,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::multiplies<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformIfBinary);
+
+
+// XXX these need to be tested with lazy thrust::sequence or something
+//template <class Vector>
+//void TestTransformUnaryCountingIterator(void)
+//{
+//    typedef typename Vector::value_type T;
+//
+//    thrust::counting_iterator<T> first(1);
+//
+//    Vector output(3);
+//
+//    thrust::transform(first, first + 3, output.begin(), thrust::identity<T>());
+//    
+//    Vector result(3);
+//    result[0] = 1; result[1] = 2; result[2] = 3;
+//
+//    ASSERT_EQUAL(output, result);
+//}
+//DECLARE_VECTOR_UNITTEST(TestTransformUnaryCountingIterator);
+//
+template <class Vector>
+void TestRangeTransformIfBinarySimple(void)
+{
+    typedef typename Vector::value_type T;
+
+    Vector input1(3);
+    Vector input2(3);
+    Vector stencil(3);
+    Vector output(3);
+    Vector result(3);
+
+    input1[0]  =  1; input1[1]  = -2; input1[2]  =  3;
+    input2[0]  = -4; input2[1]  =  5; input2[2]  =  6;
+    stencil[0] =  0; stencil[1] =  1; stencil[2] =  0;
+    output[0]  =  1; output[1]  =  2; output[2]  =  3;
+    result[0]  =  5; result[1]  =  2; result[2]  = -3;
+
+    thrust::identity<T> identity;
+
+    size_t result_size = thrust::experimental::range::transform_if(input1,
+                                                                   input2,
+                                                                   stencil,
+                                                                   output,
+                                                                   thrust::minus<T>(),
+                                                                   thrust::not1(identity));
+    
+    ASSERT_EQUAL(0, result_size);
+    ASSERT_EQUAL(output, result);
+}
+DECLARE_VECTOR_UNITTEST(TestRangeTransformIfBinarySimple);
+
+
+template <typename T>
+void TestRangeTransformUnary(const size_t n)
+{
+    thrust::host_vector<T>   h_input = unittest::random_integers<T>(n);
+    thrust::device_vector<T> d_input = h_input;
+
+    thrust::host_vector<T>   h_output(n);
+    thrust::device_vector<T> d_output(n);
+
+    thrust::experimental::range::transform(h_input, h_output, thrust::negate<T>());
+    thrust::experimental::range::transform(d_input, d_output, thrust::negate<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformUnary);
+
+
+struct is_positive
+{
+  template<typename T>
+  __host__ __device__
+  bool operator()(T &x)
+  {
+    return x > 0;
+  } // end operator()()
+}; // end is_positive
+
+
+template <typename T>
+void TestRangeTransformIfUnary(const size_t n)
+{
+    thrust::host_vector<T>   h_input   = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_stencil = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_output  = unittest::random_integers<T>(n);
+
+    thrust::device_vector<T> d_input   = h_input;
+    thrust::device_vector<T> d_stencil = h_stencil;
+    thrust::device_vector<T> d_output  = h_output;
+
+    thrust::experimental::range::transform_if(h_input,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::negate<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::negate<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformIfUnary);
+
+
+template <typename T>
+void TestRangeTransformBinary(const size_t n)
+{
+    thrust::host_vector<T>   h_input1 = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_input2 = unittest::random_integers<T>(n);
+    thrust::device_vector<T> d_input1 = h_input1;
+    thrust::device_vector<T> d_input2 = h_input2;
+
+    thrust::host_vector<T>   h_output(n);
+    thrust::device_vector<T> d_output(n);
+
+    thrust::experimental::range::transform(h_input1, h_input2, h_output, thrust::minus<T>());
+    thrust::experimental::range::transform(d_input1, d_input2, d_output, thrust::minus<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+    
+    thrust::experimental::range::transform(h_input1, h_input2, h_output, thrust::multiplies<T>());
+    thrust::experimental::range::transform(d_input1, d_input2, d_output, thrust::multiplies<T>());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformBinary);
+
+
+template <typename T>
+void TestRangeTransformIfBinary(const size_t n)
+{
+    thrust::host_vector<T>   h_input1  = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_input2  = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_stencil = unittest::random_integers<T>(n);
+    thrust::host_vector<T>   h_output  = unittest::random_integers<T>(n);
+
+    thrust::device_vector<T> d_input1  = h_input1;
+    thrust::device_vector<T> d_input2  = h_input2;
+    thrust::device_vector<T> d_stencil = h_stencil;
+    thrust::device_vector<T> d_output  = h_output;
+
+    thrust::experimental::range::transform_if(h_input1,
+                                              h_input2,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::minus<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input1,
+                                              d_input2,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::minus<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+
+    h_stencil = unittest::random_integers<T>(n);
+    d_stencil = h_stencil;
+    
+    thrust::experimental::range::transform_if(h_input1,
+                                              h_input2,
+                                              h_stencil,
+                                              h_output,
+                                              thrust::multiplies<T>(),
+                                              is_positive());
+
+    thrust::experimental::range::transform_if(d_input1,
+                                              d_input2,
+                                              d_stencil,
+                                              d_output,
+                                              thrust::multiplies<T>(),
+                                              is_positive());
+    
+    ASSERT_EQUAL(h_output, d_output);
+}
+DECLARE_VARIABLE_UNITTEST(TestRangeTransformIfBinary);
+
+
+template <class Vector>
+void TestTransformUnaryLazySequence(void)
+{
+    typedef typename Vector::value_type T;
+
+    thrust::counting_iterator<T> first(1);
+
+    Vector output(3);
+
+    thrust::transform(first, first + 3, output.begin(), thrust::identity<T>());
+    
+    Vector result(3);
+    result[0] = 1; result[1] = 2; result[2] = 3;
+
+    ASSERT_EQUAL(output, result);
+}
+DECLARE_VECTOR_UNITTEST(TestTransformUnaryCountingIterator);
+
 //template <class Vector>
 //void TestTransformIfBinarySimple(void)
 //{
