@@ -27,6 +27,11 @@
 namespace thrust
 {
 
+
+// XXX WAR circular #inclusion with forward declaration
+template<typename T> thrust::device_ptr<T> device_malloc(const std::size_t n);
+
+
 namespace detail
 {
 
@@ -85,7 +90,7 @@ template<typename T>
 
     inline size_type max_size() const
     {
-      return std::numeric_limits<size_type>::max() / sizeof(T);
+      return (std::numeric_limits<size_type>::max)() / sizeof(T);
     } // end max_size()
 
     inline bool operator==(internal_allocator const&) { return true; }
