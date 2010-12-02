@@ -20,7 +20,7 @@
 
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/pair.h>
-#include <thrust/detail/device/cuda/block/set_intersection.h>
+#include <thrust/detail/device/cuda/block/set_union.h>
 #include <thrust/detail/device/cuda/detail/split_for_set_operation.h>
 #include <thrust/detail/device/cuda/detail/set_operation.h>
 
@@ -33,10 +33,10 @@ namespace device
 namespace cuda
 {
 
-namespace set_intersection_detail
+namespace set_union_detail
 {
 
-struct block_convergent_set_intersection_functor
+struct block_convergent_set_union_functor
 {
   __host__ __device__ __forceinline__
   static unsigned int get_temporary_array_size(unsigned int block_size)
@@ -58,23 +58,24 @@ struct block_convergent_set_intersection_functor
                                      RandomAccessIterator3 result,
                                      StrictWeakOrdering comp)
   {
-    return block::set_intersection(first1,last1,first2,last2,reinterpret_cast<int*>(temporary),result,comp);
+    return block::set_union(first1,last1,first2,last2,reinterpret_cast<int*>(temporary),result,comp);
   } // end operator()()
-}; // end block_convergent_set_intersection_functor
+}; // end block_convergent_set_union_functor
 
-} // end namespace set_intersection_detail
+
+} // end namespace set_union_detail
 
 
 template<typename RandomAccessIterator1,
          typename RandomAccessIterator2, 
 	 typename RandomAccessIterator3,
          typename Compare>
-RandomAccessIterator3 set_intersection(RandomAccessIterator1 first1,
-                                       RandomAccessIterator1 last1,
-                                       RandomAccessIterator2 first2,
-                                       RandomAccessIterator2 last2,
-                                       RandomAccessIterator3 result,
-                                       Compare comp)
+RandomAccessIterator3 set_union(RandomAccessIterator1 first1,
+                                RandomAccessIterator1 last1,
+                                RandomAccessIterator2 first2,
+                                RandomAccessIterator2 last2,
+                                RandomAccessIterator3 result,
+                                Compare comp)
 {
   typedef typename thrust::iterator_difference<RandomAccessIterator1>::type difference1;
   typedef typename thrust::iterator_difference<RandomAccessIterator2>::type difference2;
@@ -83,17 +84,17 @@ RandomAccessIterator3 set_intersection(RandomAccessIterator1 first1,
   const difference2 num_elements2 = last2 - first2;
 
   // check for trivial problem
-  if(num_elements1 == 0 || num_elements2 == 0)
+  if(num_elements1 == 0 && num_elements2 == 0)
     return result;
 
   return detail::set_operation(first1, last1,
                                first2, last2,
                                result,
                                comp,
-                               thrust::make_pair(0u, num_elements1),
+                               thrust::make_pair(thrust::max<size_t>(num_elements1, num_elements2), num_elements1 + num_elements2),
                                detail::split_for_set_operation(),
-                               set_intersection_detail::block_convergent_set_intersection_functor());
-} // end set_intersection
+                               set_union_detail::block_convergent_set_union_functor());
+} // end set_union
 
 } // end namespace cuda
 } // end namespace device
