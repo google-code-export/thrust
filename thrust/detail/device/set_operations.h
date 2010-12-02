@@ -17,6 +17,7 @@
 #pragma once
 
 #include <thrust/iterator/iterator_traits.h>
+#include <thrust/iterator/detail/minimum_space.h>
 #include <thrust/detail/device/dispatch/set_operations.h>
 
 namespace thrust
@@ -41,10 +42,32 @@ template<typename InputIterator1,
 {
   // dispatch on space
   return thrust::detail::device::dispatch::set_intersection(first1,last1,first2,last2,result,comp,
-    typename thrust::iterator_space<InputIterator1>::type(),
-    typename thrust::iterator_space<InputIterator2>::type(),
-    typename thrust::iterator_space<OutputIterator>::type());
+    typename thrust::detail::minimum_space<
+      typename thrust::iterator_space<InputIterator1>::type,
+      typename thrust::iterator_space<InputIterator2>::type,
+      typename thrust::iterator_space<OutputIterator>::type
+    >::type());
 } // end set_intersection()
+
+template<typename InputIterator1,
+         typename InputIterator2,
+         typename OutputIterator,
+         typename StrictWeakOrdering>
+  OutputIterator set_union(InputIterator1 first1,
+                           InputIterator1 last1,
+                           InputIterator2 first2,
+                           InputIterator2 last2,
+                           OutputIterator result,
+                           StrictWeakOrdering comp)
+{
+  // dispatch on space
+  return thrust::detail::device::dispatch::set_union(first1,last1,first2,last2,result,comp,
+    typename thrust::detail::minimum_space<
+      typename thrust::iterator_space<InputIterator1>::type,
+      typename thrust::iterator_space<InputIterator2>::type,
+      typename thrust::iterator_space<OutputIterator>::type
+    >::type());
+} // end set_union()
 
 } // end device
 
