@@ -22,6 +22,10 @@
 #include <thrust/iterator/iterator_categories.h>
 #include <thrust/iterator/detail/iterator_category_to_traversal.h>
 #include <thrust/detail/type_traits.h>
+#include <thrust/detail/type_traits/pointer_traits.h>
+
+// XXX eliminate this #include when are_spaces_compatible no longer exists
+#include <thrust/system/omp/detail/tag.h>
 
 
 #if __GNUC__
@@ -83,6 +87,19 @@ template<typename Iterator>
       >
 {
 }; // end iterator_space
+
+// specialize iterator_space for void *, which has no category
+template<>
+  struct iterator_space<void *>
+{
+  typedef thrust::iterator_space<int*>::type type;
+}; // end iterator_space<void*>
+
+template<>
+  struct iterator_space<const void *>
+{
+  typedef thrust::iterator_space<const int*>::type type;
+}; // end iterator_space<void*>
 
 
 template <typename Iterator>
@@ -154,7 +171,7 @@ template<typename T>
     integral_constant<
       bool,
         is_pointer<T>::value
-      | is_device_ptr<T>::value
+      | thrust::detail::is_thrust_pointer<T>::value
 #if __GNUC__
       | is_gnu_normal_iterator<T>::value
 #endif // __GNUC__
@@ -164,6 +181,7 @@ template<typename T>
     > {};
 
 // XXX this should be implemented better
+// XXX eliminate the need for this completely
 template<typename Space1, typename Space2>
   struct are_spaces_interoperable
     : thrust::detail::false_type
@@ -177,13 +195,13 @@ template<typename Space>
 template<>
   struct are_spaces_interoperable<
     thrust::host_space_tag,
-    thrust::detail::omp_device_space_tag
+    thrust::omp::tag
   > : thrust::detail::true_type
 {};
 
 template<>
   struct are_spaces_interoperable<
-    thrust::detail::omp_device_space_tag,
+    thrust::omp::tag,
     thrust::host_space_tag
   > : thrust::detail::true_type
 {};

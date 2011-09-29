@@ -19,12 +19,30 @@
 #include <thrust/detail/type_traits.h>
 #include <thrust/iterator/iterator_categories.h>
 #include <thrust/iterator/iterator_traits.h>
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
-#include <thrust/iterator/detail/backend_iterator_categories.h>
 #include <thrust/iterator/detail/is_iterator_category.h>
 
 namespace thrust
 {
+
+namespace detail
+{
+
+template<typename Category, typename Space, typename Traversal>
+  struct iterator_category_with_space_and_traversal
+    : Category, Space, Traversal
+{
+}; // end iterator_category_with_space_and_traversal
+
+// specialize iterator_category_to_space for iterator_category_with_space_and_traversal
+template<typename Category> struct iterator_category_to_space;
+
+template<typename Category, typename Space, typename Traversal>
+  struct iterator_category_to_space<iterator_category_with_space_and_traversal<Category,Space,Traversal> >
+{
+  typedef Space type;
+}; // end iterator_category_with_space_and_traversal
+
+} // end detail
 
 namespace experimental
 {
@@ -122,7 +140,7 @@ template<typename Traversal, typename ValueParam, typename Reference>
 }; // end iterator_facade_default_category_host
 
 
-// this is the function for generic device space iterators
+// this is the function for device space iterators
 template<typename Traversal, typename ValueParam, typename Reference>
   struct iterator_facade_default_category_device :
     thrust::detail::eval_if<
@@ -142,60 +160,6 @@ template<typename Traversal, typename ValueParam, typename Reference>
           thrust::detail::is_convertible<Reference, ValueParam>
         >::value,
         thrust::detail::identity_<thrust::input_device_iterator_tag>,
-        thrust::detail::identity_<Traversal>
-      >
-    >
-{
-}; // end iterator_facade_default_category_device
-
-
-// this is the function for cuda device space iterators
-template<typename Traversal, typename ValueParam, typename Reference>
-  struct iterator_facade_default_category_cuda_device :
-    thrust::detail::eval_if<
-      thrust::detail::is_convertible<Traversal, thrust::forward_traversal_tag>::value,
-      thrust::detail::eval_if<
-        thrust::detail::is_convertible<Traversal, thrust::random_access_traversal_tag>::value,
-        thrust::detail::identity_<thrust::detail::random_access_cuda_device_iterator_tag>,
-        thrust::detail::eval_if<
-          thrust::detail::is_convertible<Traversal, thrust::bidirectional_traversal_tag>::value,
-          thrust::detail::identity_<thrust::detail::bidirectional_cuda_device_iterator_tag>,
-          thrust::detail::identity_<thrust::detail::forward_cuda_device_iterator_tag>
-        >
-      >,
-      thrust::detail::eval_if<
-        thrust::detail::and_<
-          thrust::detail::is_convertible<Traversal, thrust::single_pass_traversal_tag>,
-          thrust::detail::is_convertible<Reference, ValueParam>
-        >::value,
-        thrust::detail::identity_<thrust::detail::input_cuda_device_iterator_tag>,
-        thrust::detail::identity_<Traversal>
-      >
-    >
-{
-}; // end iterator_facade_default_category_device
-
-
-// this is the function for omp device space iterators
-template<typename Traversal, typename ValueParam, typename Reference>
-  struct iterator_facade_default_category_omp_device :
-    thrust::detail::eval_if<
-      thrust::detail::is_convertible<Traversal, thrust::forward_traversal_tag>::value,
-      thrust::detail::eval_if<
-        thrust::detail::is_convertible<Traversal, thrust::random_access_traversal_tag>::value,
-        thrust::detail::identity_<thrust::detail::random_access_omp_device_iterator_tag>,
-        thrust::detail::eval_if<
-          thrust::detail::is_convertible<Traversal, thrust::bidirectional_traversal_tag>::value,
-          thrust::detail::identity_<thrust::detail::bidirectional_omp_device_iterator_tag>,
-          thrust::detail::identity_<thrust::detail::forward_omp_device_iterator_tag>
-        >
-      >,
-      thrust::detail::eval_if<
-        thrust::detail::and_<
-          thrust::detail::is_convertible<Traversal, thrust::single_pass_traversal_tag>,
-          thrust::detail::is_convertible<Reference, ValueParam>
-        >::value,
-        thrust::detail::identity_<thrust::detail::input_omp_device_iterator_tag>,
         thrust::detail::identity_<Traversal>
       >
     >
@@ -246,36 +210,18 @@ template<typename Space, typename Traversal, typename ValueParam, typename Refer
           thrust::detail::is_convertible<Space, thrust::host_space_tag>::value,
           iterator_facade_default_category_host<Traversal, ValueParam, Reference>,
 
-          // check for cuda device space
+          // check for device space
           thrust::detail::eval_if<
-            thrust::detail::is_convertible<Space, thrust::detail::cuda_device_space_tag>::value,
-            iterator_facade_default_category_cuda_device<Traversal, ValueParam, Reference>,
+            thrust::detail::is_convertible<Space, thrust::device_space_tag>::value,
+            iterator_facade_default_category_device<Traversal, ValueParam, Reference>,
 
-            // check for omp device space
-            thrust::detail::eval_if<
-              thrust::detail::is_convertible<Space, thrust::detail::omp_device_space_tag>::value,
-              iterator_facade_default_category_omp_device<Traversal, ValueParam, Reference>,
-
-              // check for device space
-              thrust::detail::eval_if<
-                thrust::detail::is_convertible<Space, thrust::device_space_tag>::value,
-                iterator_facade_default_category_device<Traversal, ValueParam, Reference>,
-
-                // on failure, return Traversal
-                thrust::detail::identity_<Traversal>
-              >
-            >
+            // on failure, return Traversal
+            thrust::detail::identity_<Traversal>
           >
         >
       >
 {};
 
-
-template<typename Category, typename Space, typename Traversal>
-  struct iterator_category_with_space_and_traversal
-    : Category, Space, Traversal
-{
-}; // end iterator_category_with_space_and_traversal
 
 template<typename Space, typename Traversal, typename ValueParam, typename Reference>
   struct iterator_facade_category_impl
@@ -298,7 +244,7 @@ template<typename Space, typename Traversal, typename ValueParam, typename Refer
       >
     >::value,
     thrust::detail::identity_<category>,
-    thrust::detail::identity_<iterator_category_with_space_and_traversal<category,Space,Traversal> >
+    thrust::detail::identity_<thrust::detail::iterator_category_with_space_and_traversal<category,Space,Traversal> >
   >::type type;
 }; // end iterator_facade_category_impl
 

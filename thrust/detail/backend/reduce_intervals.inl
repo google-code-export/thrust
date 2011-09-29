@@ -15,11 +15,14 @@
  */
 
 #include <thrust/iterator/iterator_traits.h>
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
 
 #include <thrust/detail/backend/cpp/reduce_intervals.h>
 #include <thrust/detail/backend/omp/reduce_intervals.h>
 #include <thrust/detail/backend/cuda/reduce_intervals.h>
+
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
 
 namespace thrust
 {
@@ -38,7 +41,7 @@ void reduce_intervals(InputIterator input,
                       OutputIterator output,
                       BinaryFunction binary_op,
                       Decomposition decomp,
-                      thrust::host_space_tag)
+                      thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::reduce_intervals(input, output, binary_op, decomp);
 }
@@ -51,7 +54,7 @@ void reduce_intervals(InputIterator input,
                       OutputIterator output,
                       BinaryFunction binary_op,
                       Decomposition decomp,
-                      thrust::detail::cuda_device_space_tag)
+                      thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::reduce_intervals(input, output, binary_op, decomp);
 }
@@ -64,7 +67,7 @@ void reduce_intervals(InputIterator input,
                       OutputIterator output,
                       BinaryFunction binary_op,
                       Decomposition decomp,
-                      thrust::detail::omp_device_space_tag)
+                      thrust::omp::tag)
 {
   return thrust::detail::backend::omp::reduce_intervals(input, output, binary_op, decomp);
 }
@@ -80,7 +83,7 @@ void reduce_intervals(InputIterator input,
                       thrust::any_space_tag)
 {
   return thrust::detail::backend::dispatch::reduce_intervals(input, output, binary_op, decomp,
-      thrust::detail::default_device_space_tag());
+      thrust::device_space_tag());
 }
 
 } // end dispatch

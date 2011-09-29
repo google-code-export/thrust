@@ -20,6 +20,8 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/detail/backend/generic/free.h>
 #include <thrust/detail/backend/cuda/free.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
 
 namespace thrust
 {
@@ -32,7 +34,7 @@ namespace dispatch
 
 template<unsigned int DummyParameterToAvoidInstantiation>
 void free(thrust::device_ptr<void> ptr,
-          thrust::device_space_tag)
+          thrust::omp::tag)
 {
   thrust::detail::backend::generic::free<0>(ptr);
 } // end free()
@@ -40,7 +42,7 @@ void free(thrust::device_ptr<void> ptr,
 
 template<unsigned int DummyParameterToAvoidInstantiation>
 void free(thrust::device_ptr<void> ptr,
-          thrust::detail::cuda_device_space_tag)
+          thrust::cuda::tag)
 {
   thrust::detail::backend::cuda::free<0>(ptr);
 } // end free()

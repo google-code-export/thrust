@@ -21,6 +21,10 @@
 #include <thrust/detail/backend/cuda/merge.h>
 #include <thrust/iterator/detail/minimum_space.h>
 
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
+
 namespace thrust
 {
 namespace detail
@@ -41,7 +45,7 @@ template<typename InputIterator1,
                        InputIterator2 last2,
                        OutputIterator result,
                        StrictWeakOrdering comp,
-                       thrust::host_space_tag)
+                       thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::merge(first1,last1,first2,last2,result,comp);
 } // end merge()
@@ -58,7 +62,7 @@ template<typename InputIterator1,
                        InputIterator2 last2,
                        OutputIterator result,
                        StrictWeakOrdering comp,
-                       thrust::detail::omp_device_space_tag)
+                       thrust::omp::tag)
 {
   return thrust::detail::backend::cpp::merge(first1,last1,first2,last2,result,comp);
 } // end merge()
@@ -74,7 +78,7 @@ template<typename InputIterator1,
                        InputIterator2 last2,
                        OutputIterator result,
                        StrictWeakOrdering comp,
-                       thrust::detail::cuda_device_space_tag)
+                       thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::merge(first1,last1,first2,last2,result,comp);
 } // end merge()

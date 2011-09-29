@@ -21,11 +21,12 @@
 
 #pragma once
 
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
-
 #include <thrust/detail/backend/cpp/default_decomposition.h>
 #include <thrust/detail/backend/omp/default_decomposition.h>
 #include <thrust/detail/backend/cuda/default_decomposition.h>
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
 
 namespace thrust
 {
@@ -37,19 +38,19 @@ namespace dispatch
 {
 
 template <typename IndexType>
-uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::host_space_tag)
+uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::default_decomposition(n);
 }
 
 template <typename IndexType>
-uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::detail::omp_device_space_tag)
+uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::omp::tag)
 {
   return thrust::detail::backend::omp::default_decomposition(n);
 }
 
 template <typename IndexType>
-uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::detail::cuda_device_space_tag)
+uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::default_decomposition(n);
 }
@@ -57,7 +58,7 @@ uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::deta
 template <typename IndexType>
 uniform_decomposition<IndexType> default_decomposition(IndexType n, thrust::any_space_tag)
 {
-  return thrust::detail::backend::dispatch::default_decomposition(n, thrust::detail::default_device_space_tag());
+  return thrust::detail::backend::dispatch::default_decomposition(n, thrust::device_space_tag());
 }
 
 } // end namespace dispatch

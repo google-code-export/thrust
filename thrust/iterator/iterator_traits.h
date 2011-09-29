@@ -31,6 +31,8 @@
 #pragma once
 
 #include <thrust/detail/config.h>
+#include <thrust/iterator/detail/host_space_tag.h>
+#include <thrust/iterator/detail/device_space_tag.h>
 #include <iterator>
 
 namespace thrust
@@ -41,12 +43,6 @@ template<typename T>
     : public std::iterator_traits<T>
 {
 }; // end iterator_traits
-
-
-// define space tags
-struct host_space_tag {};
-
-struct device_space_tag {};
 
 
 // define Boost's traversal tags

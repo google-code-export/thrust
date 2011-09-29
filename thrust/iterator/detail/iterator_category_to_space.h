@@ -19,7 +19,6 @@
 #include <thrust/iterator/iterator_categories.h>
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/detail/type_traits.h>
-#include <thrust/iterator/detail/device_iterator_category_to_backend_space.h>
 
 namespace thrust
 {
@@ -37,6 +36,8 @@ template <typename> struct is_iterator_space;
 
 template <typename> struct device_iterator_category_to_backend_space;
 
+// XXX this should work entirely differently
+// we should just specialize this metafunction for iterator_category_with_space_and_traversal
 template<typename Category>
   struct iterator_category_to_space
     // convertible to any iterator?
@@ -64,10 +65,10 @@ template<typename Category>
               is_convertible<Category, thrust::output_device_iterator_tag>
             >::value,
 
-            device_iterator_category_to_backend_space<Category>,
+            detail::identity_<thrust::device_space_tag>,
 
             // unknown space
-            void
+            detail::identity_<void>
           > // if device
         > // if host
       > // if any

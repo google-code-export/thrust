@@ -24,6 +24,10 @@
 #include <thrust/detail/backend/omp/for_each.h>
 #include <thrust/detail/backend/generic/for_each.h>
 
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
+
 namespace thrust
 {
 namespace detail
@@ -40,7 +44,7 @@ template<typename OutputIterator,
 OutputIterator for_each_n(OutputIterator first,
                           Size n,
                           UnaryFunction f,
-                          thrust::detail::omp_device_space_tag)
+                          thrust::omp::tag)
 {
   return thrust::detail::backend::omp::for_each_n(first, n, f);
 }
@@ -51,7 +55,7 @@ template<typename OutputIterator,
 OutputIterator for_each_n(OutputIterator first,
                           Size n,
                           UnaryFunction f,
-                          thrust::detail::cuda_device_space_tag)
+                          thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::for_each_n(first, n, f);
 }
@@ -62,7 +66,7 @@ template<typename OutputIterator,
 OutputIterator for_each_n(OutputIterator first,
                           Size n,
                           UnaryFunction f,
-                          thrust::host_space_tag)
+                          thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::for_each_n(first, n, f);
 }
@@ -76,7 +80,7 @@ OutputIterator for_each_n(OutputIterator first,
                           thrust::any_space_tag)
 {
   return thrust::detail::backend::dispatch::for_each_n(first, n, f,
-    thrust::detail::default_device_space_tag());
+    thrust::device_space_tag());
 }
 
 
@@ -96,7 +100,7 @@ template<typename InputIterator,
 InputIterator for_each(InputIterator first,
                        InputIterator last,
                        UnaryFunction f,
-                       thrust::host_space_tag)
+                       thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::for_each(first, last, f);
 }
@@ -109,7 +113,7 @@ InputIterator for_each(InputIterator first,
                        thrust::any_space_tag)
 {
   return thrust::detail::backend::dispatch::for_each(first, last, f,
-    thrust::detail::default_device_space_tag());
+    thrust::device_space_tag());
 }
 
 

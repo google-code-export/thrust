@@ -17,7 +17,6 @@
 #pragma once
 
 #include <thrust/iterator/iterator_traits.h>
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
 
 namespace thrust
 {
@@ -29,9 +28,9 @@ struct any_space_tag
 
   operator device_space_tag () {return device_space_tag();};
 
-  operator detail::cuda_device_space_tag () {return detail::cuda_device_space_tag();};
-
-  operator detail::omp_device_space_tag () {return detail::omp_device_space_tag();};
+  // allow any_space_tag to convert to any type at all
+  // XXX make this safer using enable_if<is_tag<T>> upon c++11
+  template<typename T> operator T () const {return T();}
 };
 
 } // end thrust

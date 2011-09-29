@@ -19,7 +19,6 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/transform_iterator.h>
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
 
 #include <thrust/detail/uninitialized_array.h>
 
@@ -28,6 +27,7 @@
 #include <thrust/detail/backend/cuda/default_decomposition.h>
 #include <thrust/detail/backend/cuda/detail/launch_closure.h>
 #include <thrust/detail/backend/cuda/detail/launch_calculator.h>
+#include <thrust/system/cuda/detail/tag.h>
 
 namespace thrust
 {
@@ -150,7 +150,7 @@ OutputIterator adjacent_difference(InputIterator first, InputIterator last,
 {
   typedef typename thrust::iterator_value<InputIterator>::type               InputType;
   typedef typename thrust::iterator_difference<InputIterator>::type          IndexType;
-  typedef          thrust::detail::cuda_device_space_tag                     Space;
+  typedef          thrust::cuda::tag                                         Space;
   typedef          thrust::detail::backend::uniform_decomposition<IndexType> Decomposition;
 
   IndexType n = last - first;

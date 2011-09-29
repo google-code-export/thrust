@@ -27,6 +27,10 @@
 #include <thrust/detail/backend/cuda/sort.h>
 #include <thrust/detail/backend/omp/sort.h>
 
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
+
 namespace thrust
 {
 namespace detail
@@ -54,7 +58,7 @@ template<typename RandomAccessIterator,
   void stable_sort(RandomAccessIterator first,
                    RandomAccessIterator last,
                    StrictWeakOrdering comp,
-                   thrust::host_space_tag)
+                   thrust::cpp::tag)
 {
   thrust::detail::backend::cpp::stable_sort(first,last,comp);
 }
@@ -65,7 +69,7 @@ template<typename RandomAccessIterator,
   void stable_sort(RandomAccessIterator first,
                    RandomAccessIterator last,
                    StrictWeakOrdering comp,
-                   thrust::detail::cuda_device_space_tag)
+                   thrust::cuda::tag)
 {
   thrust::detail::backend::cuda::stable_sort(first, last, comp);
 }
@@ -76,7 +80,7 @@ template<typename RandomAccessIterator,
   void stable_sort(RandomAccessIterator first,
                    RandomAccessIterator last,
                    StrictWeakOrdering comp,
-                   thrust::detail::omp_device_space_tag)
+                   thrust::omp::tag)
 {
   thrust::detail::backend::omp::stable_sort(first, last, comp);
 }
@@ -103,7 +107,7 @@ template<typename RandomAccessIterator1,
                           RandomAccessIterator1 keys_last,
                           RandomAccessIterator2 values_first,
                           StrictWeakOrdering comp,
-                          thrust::host_space_tag)
+                          thrust::cpp::tag)
 {
   thrust::detail::backend::cpp::stable_sort_by_key(keys_first, keys_last, values_first, comp);
 } // end stable_sort_by_key()
@@ -116,7 +120,7 @@ template<typename RandomAccessIterator1,
                           RandomAccessIterator1 keys_last,
                           RandomAccessIterator2 values_first,
                           StrictWeakOrdering comp,
-                          thrust::detail::cuda_device_space_tag)
+                          thrust::cuda::tag)
 {
   thrust::detail::backend::cuda::stable_sort_by_key(keys_first, keys_last, values_first, comp);
 } // end stable_sort_by_key()
@@ -128,7 +132,7 @@ template<typename RandomAccessIterator1,
                           RandomAccessIterator1 keys_last,
                           RandomAccessIterator2 values_first,
                           StrictWeakOrdering comp,
-                          thrust::detail::omp_device_space_tag)
+                          thrust::omp::tag)
 {
   return thrust::detail::backend::omp::stable_sort_by_key(keys_first, keys_last, values_first, comp);
 } // end stable_sort_by_key()

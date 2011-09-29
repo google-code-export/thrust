@@ -19,6 +19,8 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/detail/backend/cuda/merge.h>
 #include <thrust/detail/backend/omp/merge.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
 
 namespace thrust
 {
@@ -42,7 +44,7 @@ template<typename InputIterator1,
                        InputIterator2 last2,
                        OutputIterator result,
                        StrictWeakOrdering comp,
-                       thrust::detail::omp_device_space_tag)
+                       thrust::omp::tag)
 {
   // omp backend
   return thrust::detail::backend::omp::merge(first1,last1,first2,last2,result,comp);
@@ -59,7 +61,7 @@ template<typename InputIterator1,
                        InputIterator2 last2,
                        OutputIterator result,
                        StrictWeakOrdering comp,
-                       thrust::detail::cuda_device_space_tag)
+                       thrust::cuda::tag)
 {
   // CUDA backend
   return thrust::detail::backend::cuda::merge(first1,last1,first2,last2,result,comp);

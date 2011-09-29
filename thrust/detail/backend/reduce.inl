@@ -15,13 +15,15 @@
  */
 
 #include <thrust/iterator/iterator_traits.h>
-#include <thrust/iterator/detail/backend_iterator_spaces.h>
 
 #include <thrust/detail/backend/cpp/reduce.h>
 #include <thrust/detail/backend/cuda/reduce.h>
 #include <thrust/detail/backend/cuda/reduce_by_key.h>
 #include <thrust/detail/backend/generic/reduce.h>
 #include <thrust/detail/backend/generic/reduce_by_key.h>
+
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
 
 namespace thrust
 {
@@ -39,7 +41,7 @@ template<typename InputIterator,
                     InputIterator last,
                     OutputType init,
                     BinaryFunction binary_op,
-                    thrust::host_space_tag)
+                    thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::reduce(first, last, init, binary_op);
 }
@@ -51,7 +53,7 @@ template<typename InputIterator,
                     InputIterator last,
                     OutputType init,
                     BinaryFunction binary_op,
-                    thrust::detail::cuda_device_space_tag)
+                    thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::reduce_n(first, last - first, init, binary_op);
 }
@@ -79,7 +81,7 @@ template<typename InputIterator,
                     thrust::any_space_tag)
 {
   return thrust::detail::backend::dispatch::reduce(first, last, init, binary_op,
-      thrust::detail::default_device_space_tag());
+      thrust::device_space_tag());
 }
 
 
@@ -119,7 +121,7 @@ template<typename InputIterator1,
                      OutputIterator2 values_output,
                      BinaryPredicate binary_pred,
                      BinaryFunction binary_op,
-                     thrust::host_space_tag)
+                     thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::reduce_by_key(keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
 }
@@ -138,7 +140,7 @@ template<typename InputIterator1,
                      OutputIterator2 values_output,
                      BinaryPredicate binary_pred,
                      BinaryFunction binary_op,
-                     thrust::detail::cuda_device_space_tag)
+                     thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::reduce_by_key(keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
 }
@@ -146,18 +148,18 @@ template<typename InputIterator1,
 } // end dispatch
 
 // this metafunction passes through a type unless it's any_space_tag,
-// in which case it returns default_device_space_tag
+// in which case it returns device_space_tag
 template<typename Space>
-  struct any_space_to_default_device_space_tag
+  struct any_space_to_device_space_tag
 {
   typedef Space type;
-}; // end any_space_to_default_device_space_tag
+}; // end any_space_to_device_space_tag
 
 template<>
-  struct any_space_to_default_device_space_tag<thrust::any_space_tag>
+  struct any_space_to_device_space_tag<thrust::any_space_tag>
 {
-  typedef thrust::detail::default_device_space_tag type;
-}; // end any_space_to_default_device_space_tag
+  typedef thrust::device_space_tag type;
+}; // end any_space_to_device_space_tag
 
 
 template<typename InputIterator, 

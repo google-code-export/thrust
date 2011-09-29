@@ -23,6 +23,10 @@
 #include <thrust/detail/backend/omp/copy.h>
 #include <thrust/detail/backend/cuda/copy.h>
 
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
+
 namespace thrust
 {
 namespace detail
@@ -45,22 +49,22 @@ template<typename Space1, typename Space2>
   struct copy_case
     : thrust::detail::eval_if<
         thrust::detail::or_<
-          thrust::detail::is_same<Space1,thrust::detail::cuda_device_space_tag>,
-          thrust::detail::is_same<Space2,thrust::detail::cuda_device_space_tag>
+          thrust::detail::is_same<Space1,thrust::cuda::tag>,
+          thrust::detail::is_same<Space2,thrust::cuda::tag>
         >::value,
-        thrust::detail::identity_<thrust::detail::cuda_device_space_tag>,
+        thrust::detail::identity_<thrust::cuda::tag>,
         thrust::detail::eval_if<
           thrust::detail::or_<
-            thrust::detail::is_same<Space1,thrust::detail::omp_device_space_tag>,
-            thrust::detail::is_same<Space2,thrust::detail::omp_device_space_tag>
+            thrust::detail::is_same<Space1,thrust::omp::tag>,
+            thrust::detail::is_same<Space2,thrust::omp::tag>
           >::value,
-          thrust::detail::identity_<thrust::detail::omp_device_space_tag>,
+          thrust::detail::identity_<thrust::omp::tag>,
           thrust::detail::eval_if<
             thrust::detail::or_<
-              thrust::detail::is_same<Space1,thrust::host_space_tag>,
-              thrust::detail::is_same<Space2,thrust::host_space_tag>
+              thrust::detail::is_same<Space1,thrust::cpp::tag>,
+              thrust::detail::is_same<Space2,thrust::cpp::tag>
             >::value,
-            thrust::detail::identity_<thrust::host_space_tag>,
+            thrust::detail::identity_<thrust::cpp::tag>,
             thrust::detail::identity_<void>
           >
         >
@@ -76,7 +80,7 @@ template<typename InputIterator,
   OutputIterator copy(InputIterator first,
                       InputIterator last,
                       OutputIterator result,
-                      thrust::host_space_tag)
+                      thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::copy(first,last,result);
 } // end copy()
@@ -87,7 +91,7 @@ template<typename InputIterator,
   OutputIterator copy_n(InputIterator first,
                         Size n,
                         OutputIterator result,
-                        thrust::host_space_tag)
+                        thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::copy_n(first,n,result);
 } // end copy_n()
@@ -99,7 +103,7 @@ template<typename InputIterator,
   OutputIterator copy(InputIterator first,
                       InputIterator last,
                       OutputIterator result,
-                      thrust::detail::omp_device_space_tag)
+                      thrust::omp::tag)
 {
   return thrust::detail::backend::omp::copy(first, last, result);
 } // end copy()
@@ -110,7 +114,7 @@ template<typename InputIterator,
   OutputIterator copy_n(InputIterator first,
                         Size n,
                         OutputIterator result,
-                        thrust::detail::omp_device_space_tag)
+                        thrust::omp::tag)
 {
   return thrust::detail::backend::omp::copy_n(first, n, result);
 } // end copy_n()
@@ -122,7 +126,7 @@ template<typename InputIterator,
   OutputIterator copy(InputIterator first,
                       InputIterator last,
                       OutputIterator result,
-                      thrust::detail::cuda_device_space_tag)
+                      thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::copy(first, last, result);
 } // end copy()
@@ -134,7 +138,7 @@ template<typename InputIterator,
   OutputIterator copy_n(InputIterator first,
                         Size n,
                         OutputIterator result,
-                        thrust::detail::cuda_device_space_tag)
+                        thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::copy_n(first, n, result);
 } // end copy_n()

@@ -22,6 +22,10 @@
 #include <thrust/detail/backend/omp/scan.h>
 #include <thrust/detail/backend/generic/scan_by_key.h>
 
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
+#include <thrust/system/omp/detail/tag.h>
+
 namespace thrust
 {
 namespace detail
@@ -39,7 +43,7 @@ template<typename InputIterator,
                                 InputIterator last,
                                 OutputIterator result,
                                 AssociativeOperator binary_op,
-                                thrust::host_space_tag)
+                                thrust::cpp::tag)
 {
     return thrust::detail::backend::cpp::inclusive_scan(first, last, result, binary_op);
 }
@@ -52,7 +56,7 @@ template<typename InputIterator,
                                 InputIterator last,
                                 OutputIterator result,
                                 AssociativeOperator binary_op,
-                                thrust::detail::omp_device_space_tag)
+                                thrust::omp::tag)
 {
     return thrust::detail::backend::omp::inclusive_scan(first, last, result, binary_op);
 }
@@ -65,7 +69,7 @@ template<typename InputIterator,
                                 InputIterator last,
                                 OutputIterator result,
                                 AssociativeOperator binary_op,
-                                thrust::detail::cuda_device_space_tag)
+                                thrust::cuda::tag)
 {
     return thrust::detail::backend::cuda::inclusive_scan(first, last, result, binary_op);
 }
@@ -81,7 +85,7 @@ template<typename InputIterator,
                                 OutputIterator result,
                                 T init,
                                 AssociativeOperator binary_op,
-                                thrust::host_space_tag)
+                                thrust::cpp::tag)
 {
     return thrust::detail::backend::cpp::exclusive_scan(first, last, result, init, binary_op);
 }
@@ -97,7 +101,7 @@ template<typename InputIterator,
                                 OutputIterator result,
                                 T init,
                                 AssociativeOperator binary_op,
-                                thrust::detail::omp_device_space_tag)
+                                thrust::omp::tag)
 {
     return thrust::detail::backend::omp::exclusive_scan(first, last, result, init, binary_op);
 }
@@ -113,7 +117,7 @@ template<typename InputIterator,
                                 OutputIterator result,
                                 T init,
                                 AssociativeOperator binary_op,
-                                thrust::detail::cuda_device_space_tag)
+                                thrust::cuda::tag)
 {
     return thrust::detail::backend::cuda::exclusive_scan(first, last, result, init, binary_op);
 }
@@ -131,7 +135,7 @@ template<typename InputIterator1,
                                        OutputIterator result,
                                        BinaryPredicate binary_pred,
                                        AssociativeOperator binary_op,
-                                       thrust::host_space_tag)
+                                       thrust::cpp::tag)
 {
     return thrust::detail::backend::cpp::inclusive_scan_by_key(first1, last1, first2, result, binary_pred, binary_op);
 }
@@ -170,7 +174,7 @@ template<typename InputIterator1,
                                        const T init,
                                        BinaryPredicate binary_pred,
                                        AssociativeOperator binary_op,
-                                       thrust::host_space_tag)
+                                       thrust::cpp::tag)
 {
     return thrust::detail::backend::cpp::exclusive_scan_by_key(first1, last1, first2, result, init, binary_pred, binary_op);
 }

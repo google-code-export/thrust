@@ -19,6 +19,8 @@
 #include <thrust/detail/config.h>
 #include <thrust/iterator/iterator_adaptor.h>
 #include <thrust/iterator/iterator_traits.h>
+#include <thrust/detail/type_traits/pointer_traits.h>
+#include <thrust/detail/type_traits.h>
 #include <ostream>
 
 namespace thrust
@@ -26,29 +28,29 @@ namespace thrust
 namespace detail
 {
 
-template<typename Derived, typename Value, typename Reference, typename Space> class pointer_base;
+template<typename Element, typename Derived, typename Reference, typename Space> class pointer_base;
 
 // this metafunction computes the type of iterator_adaptor pointer_base should inherit from
-template<typename Derived, typename Value, typename Reference, typename Space>
+template<typename Element, typename Derived, typename Reference, typename Space>
   struct pointer_base_base
 {
-  // void pointers should have no value type
+  // void pointers should have no element type
   typedef typename thrust::detail::eval_if<
-    thrust::detail::is_void<typename thrust::detail::remove_const<Value>::type>::value,
+    thrust::detail::is_void<typename thrust::detail::remove_const<Element>::type>::value,
     thrust::detail::identity_<void>,
-    thrust::detail::identity_<Value>
+    thrust::detail::identity_<Element>
   >::type value_type;
 
   // void pointers should have no reference type
   typedef typename thrust::detail::eval_if<
-    thrust::detail::is_void<typename thrust::detail::remove_const<Value>::type>::value,
+    thrust::detail::is_void<typename thrust::detail::remove_const<Element>::type>::value,
     thrust::detail::identity_<void>,
     thrust::detail::identity_<Reference>
   >::type reference;
 
   typedef thrust::experimental::iterator_adaptor<
     Derived,                             // pass along the type of our Derived class to iterator_adaptor
-    Value *,                             // we adapt a raw pointer
+    Element *,                           // we adapt a raw pointer
     Derived,                             // our pointer type is the same as our Derived type
     value_type,                          // the value type
     Space,                               // space
@@ -62,16 +64,17 @@ template<typename Derived, typename Value, typename Reference, typename Space>
 // the base type for all of thrust's space-annotated pointers.
 // for reasonable pointer-like semantics, derived types should reimplement the following:
 // 1. no-argument constructor
-// 2. constructor from OtherValue *
-// 3. constructor from derived_type<OtherDerived,...>
-// 4. assignment from derived_type<OtherDerived,...>
+// 2. constructor from OtherElement *
+// 3. constructor from OtherPointer related by convertibility
+// 4. assignment from OtherPointer related by convertibility
 // These should just call the corresponding members of pointer_base.
-template<typename Derived, typename Value, typename Reference, typename Space>
+template<typename Element, typename Derived, typename Reference, typename Space>
   class pointer_base
-    : public pointer_base_base<Derived,Value,Reference,Space>::type
+    : public pointer_base_base<Element,Derived,Reference,Space>::type
 {
   private:
-    typedef typename pointer_base_base<Derived,Value,Reference,Space>::type super_t;
+    typedef typename pointer_base_base<Element,Derived,Reference,Space>::type super_t;
+    typedef Derived                                                           derived_type;
 
     // friend iterator_core_access to give it access to dereference
     friend class thrust::experimental::iterator_core_access;
@@ -84,32 +87,46 @@ template<typename Derived, typename Value, typename Reference, typename Space>
     using super_t::base_type;
 
   public:
+    typedef typename super_t::base_type raw_pointer;
+
     // constructors
     
     __host__ __device__
     pointer_base();
 
     // OtherValue shall be convertible to Value
-    template<typename OtherValue>
+    // XXX consider making the pointer implementation a template parameter which defaults to Element *
+    template<typename OtherElement>
     __host__ __device__
-    explicit pointer_base(OtherValue *ptr);
+    explicit pointer_base(OtherElement *ptr);
 
-    // OtherValue shall be convertible to Value
-    template<typename OtherDerived, typename OtherValue, typename OtherReference>
+    // OtherPointer's element_type shall be convertible to Element
+    // OtherPointer's space shall be convertible to Space
+    template<typename OtherPointer>
     __host__ __device__
-    pointer_base(const pointer_base<OtherDerived,OtherValue,OtherReference,Space> &other);
+    pointer_base(const OtherPointer &other,
+                 typename thrust::detail::enable_if_pointer_is_convertible<
+                   OtherPointer,
+                   pointer_base<Element,Derived,Reference,Space>
+                 >::type * = 0);
 
     // assignment
     
-    // OtherValue shall be convertible to Value
-    template<typename OtherDerived, typename OtherValue, typename OtherReference>
+    // OtherPointer's element_type shall be convertible to Element
+    // OtherPointer's space shall be convertible to Space
+    template<typename OtherPointer>
     __host__ __device__
-    pointer_base &operator=(const pointer_base<OtherDerived,OtherValue,OtherReference,Space> &other);
+    typename thrust::detail::enable_if_pointer_is_convertible<
+      OtherPointer,
+      pointer_base,
+      derived_type &
+    >::type
+    operator=(const OtherPointer &other);
 
     // observers
 
     __host__ __device__
-    Value *get() const;
+    Element *get() const;
 };
 
 } // end detail

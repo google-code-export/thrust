@@ -16,25 +16,29 @@
 
 #pragma once
 
-#include <thrust/iterator/iterator_traits.h>
+#include <thrust/detail/config.h>
+
+#if   THRUST_DEVICE_BACKEND == THRUST_DEVICE_BACKEND_CUDA
+#include <thrust/system/cuda/detail/tag.h>
 
 namespace thrust
 {
-namespace detail
+
+typedef thrust::system::cuda::tag device_space_tag;
+
+} // end thrust
+
+#elif  THRUST_DEVICE_BACKEND == THRUST_DEVICE_BACKEND_OMP
+#include <thrust/system/omp/detail/tag.h>
+
+namespace thrust
 {
 
-// define these in detail for now
-struct cuda_device_space_tag : device_space_tag {};
-struct omp_device_space_tag : device_space_tag {};
+typedef thrust::system::omp::tag device_space_tag;
 
-#if   THRUST_DEVICE_BACKEND == THRUST_DEVICE_BACKEND_CUDA
-typedef cuda_device_space_tag default_device_space_tag;
-#elif THRUST_DEVICE_BACKEND == THRUST_DEVICE_BACKEND_OMP
-typedef omp_device_space_tag  default_device_space_tag;
+} // end thrust
+
 #else
 #error Unknown device backend.
 #endif // THRUST_DEVICE_BACKEND
-
-} // end namespace detail
-} // end namespace thrust
 

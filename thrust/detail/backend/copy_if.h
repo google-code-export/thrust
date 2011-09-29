@@ -23,6 +23,8 @@
 #include <thrust/detail/backend/generic/copy_if.h>
 #include <thrust/detail/backend/cpp/copy_if.h>
 #include <thrust/detail/backend/cuda/copy_if.h>
+#include <thrust/system/cpp/detail/tag.h>
+#include <thrust/system/cuda/detail/tag.h>
 
 namespace thrust
 {
@@ -58,7 +60,7 @@ template<typename InputIterator1,
                          InputIterator2 stencil,
                          OutputIterator result,
                          Predicate pred,
-                         thrust::host_space_tag)
+                         thrust::cpp::tag)
 {
   return thrust::detail::backend::cpp::copy_if(first, last, stencil, result, pred);
 } // end copy_if()
@@ -72,7 +74,7 @@ template<typename InputIterator1,
                          InputIterator2 stencil,
                          OutputIterator result,
                          Predicate pred,
-                         thrust::detail::cuda_device_space_tag)
+                         thrust::cuda::tag)
 {
   return thrust::detail::backend::cuda::copy_if(first, last, stencil, result, pred);
 } // end copy_if()
