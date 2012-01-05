@@ -20,7 +20,6 @@
 #include <thrust/copy.h>
 #include <thrust/functional.h>
 #include <thrust/iterator/iterator_traits.h>
-#include <thrust/detail/backend/dereference.h>
 #include <thrust/detail/temporary_array.h>
 #include <thrust/detail/cstdint.h>
 
@@ -208,7 +207,7 @@ void radix_sort(RandomAccessIterator1 keys1,
           temp_keys2 += j;
 
           // keys1[position] = keys2[j]
-          thrust::detail::backend::dereference(temp_keys1) = thrust::detail::backend::dereference(temp_keys2);
+          *temp_keys1 = *temp_keys2;
 
           if (HasValues)
           {
@@ -219,7 +218,7 @@ void radix_sort(RandomAccessIterator1 keys1,
             temp_vals2 += j;
 
             // vals1[position] = vals2[j]
-            thrust::detail::backend::dereference(temp_vals1) = thrust::detail::backend::dereference(temp_vals2);
+            *temp_vals1 = *temp_vals2;
           }
         }
       }
@@ -237,7 +236,7 @@ void radix_sort(RandomAccessIterator1 keys1,
           temp_keys2 += position;
 
           // keys2[position] = keys1[j];
-          thrust::detail::backend::dereference(temp_keys2) = thrust::detail::backend::dereference(temp_keys1);
+          *temp_keys2 = *temp_keys1;
 
           if (HasValues)
           {
@@ -248,7 +247,7 @@ void radix_sort(RandomAccessIterator1 keys1,
             temp_vals2 += position;
 
             // vals2[position] = vals1[j]
-            thrust::detail::backend::dereference(temp_vals2) = thrust::detail::backend::dereference(temp_vals1);
+            *temp_vals2 = *temp_vals1;
           }
         }
       }

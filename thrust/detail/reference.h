@@ -25,6 +25,12 @@
 
 namespace thrust
 {
+namespace detail
+{
+
+template<typename> struct is_wrapped_reference;
+
+}
 
 // the base type for all of thrust's space-annotated references.
 // for reasonable reference-like semantics, derived types must reimplement the following:
@@ -43,6 +49,11 @@ template<typename Element, typename Pointer, typename Derived>
       thrust::detail::identity_<Derived>
     >::type derived_type;
 
+    // hint for is_wrapped_reference lets it know that this type (or a derived type)
+    // is a wrapped reference
+    struct wrapped_reference_hint {};
+    template<typename> friend struct thrust::detail::is_wrapped_reference;
+
   public:
     typedef Pointer                                              pointer;
     typedef typename thrust::detail::remove_const<Element>::type value_type;
@@ -58,12 +69,15 @@ template<typename Element, typename Pointer, typename Derived>
                 pointer
               >::type * = 0);
 
+    __host__ __device__
     derived_type &operator=(const reference &other);
 
     // XXX this may need an enable_if
     template<typename OtherElement, typename OtherPointer, typename OtherDerived>
+    __host__ __device__
     derived_type &operator=(const reference<OtherElement,OtherPointer,OtherDerived> &other);
 
+    __host__ __device__
     derived_type &operator=(const value_type &x);
 
     __host__ __device__
@@ -120,6 +134,7 @@ template<typename Element, typename Pointer, typename Derived>
     template <typename OtherElement, typename OtherPointer, typename OtherDerived> friend class reference;
 
     template<typename OtherPointer>
+    __host__ __device__
     inline void assign_from(OtherPointer src);
 }; // end reference
 
